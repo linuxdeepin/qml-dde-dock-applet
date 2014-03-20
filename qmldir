@@ -1,0 +1,3 @@
+module Deepin.DockApplet
+plugin dock-applet
+
