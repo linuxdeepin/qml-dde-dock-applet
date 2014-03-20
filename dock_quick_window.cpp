@@ -5,32 +5,17 @@ DockQuickWindow::DockQuickWindow(QQuickWindow *parent):
     QQuickWindow(parent),
     firstShow(true)
 {
-    this->destroy();
-
     QSurfaceFormat sformat;
     sformat.setAlphaBufferSize(8);
     this->setFormat(sformat);
     this->setClearBeforeRendering(true);
 
-    this->create();
-
-    // By default, QQuickItem does not draw anything. If you subclass
-    // QQuickItem to create a visual item, you will need to uncomment the
-    // following line and re-implement updatePaintNode()
-
-    // setFlag(ItemHasContents, true);
     this->applet = new DockApplet(this, winId());
-}
-
-void DockQuickWindow::resizeEvent(QResizeEvent *) {
-    if (firstShow) {
-        firstShow=false;
-        this->hide();
-    }
 }
 
 DockQuickWindow::~DockQuickWindow()
 {
+    delete this->applet;
 }
 
 
@@ -42,6 +27,11 @@ DockApplet::DockApplet(DockQuickWindow* parent, int xid) :
     QString id  = QString::number(xid);
     QDBusConnection::sessionBus().registerService("dde.dock.entry.Applet" + id);
     qDebug() << "Register:" << QDBusConnection::sessionBus().registerObject("/dde/dock/entry/Applet" + id, parent);
+
+    QObject::connect(m_parent, SIGNAL(iconChanged(QString)), this, SIGNAL(iconChanged(QString)));
+    QObject::connect(m_parent, SIGNAL(menuChanged(QString)), this, SIGNAL(menuChanged(QString)));
+    QObject::connect(m_parent, SIGNAL(titleChanged(QString)), this, SIGNAL(titleChanged(QString)));
+    QObject::connect(m_parent, SIGNAL(statusChanged(qint32)), this, SIGNAL(statusChanged(qint32)));
 
     qDebug() << "CreateProxyer for:" <<  xid;
 }

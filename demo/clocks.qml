@@ -4,9 +4,14 @@ import Deepin.DockApplet 1.0
 
 DockQuickWindow {
     Timer {
-	interval:1000; running:true; repeat:false
-	onTriggered: root.show()
+	interval:5000; running:false; repeat:false
+	onTriggered: {
+	    root.show()
+	    root.title="heheheh"
+	}
     }
+    title:"he"
+    appid: "123"
     id: root
     width: 640; height: 320
     color: Qt.rgba(0,0,0,0)
