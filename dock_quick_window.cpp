@@ -2,17 +2,24 @@
 #include <QDBusConnection>
 
 DockQuickWindow::DockQuickWindow(QQuickWindow *parent):
-    QQuickWindow(parent), firstShow(true),
-    applet(new DockApplet(this, winId()))
+    QQuickWindow(parent),
+    firstShow(true)
 {
+    this->destroy();
+
+    QSurfaceFormat sformat;
+    sformat.setAlphaBufferSize(8);
+    this->setFormat(sformat);
+    this->setClearBeforeRendering(true);
+
+    this->create();
+
     // By default, QQuickItem does not draw anything. If you subclass
     // QQuickItem to create a visual item, you will need to uncomment the
     // following line and re-implement updatePaintNode()
 
     // setFlag(ItemHasContents, true);
-    qDebug() << "hehe:" <<  this->winId();
-    this->applet->setProperty("menu", "123");
-
+    this->applet = new DockApplet(this, winId());
 }
 
 void DockQuickWindow::resizeEvent(QResizeEvent *) {
