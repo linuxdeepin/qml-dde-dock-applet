@@ -11,7 +11,7 @@ DockQuickWindow {
 	}
     }
     title:"he"
-    appid: "123"
+    appid: "Applet100663307"
     id: root
     width: 640; height: 320
     color: Qt.rgba(0,0,0,0)

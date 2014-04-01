@@ -56,6 +56,7 @@ DockApplet::DockApplet(DockQuickWindow* parent, int xid) :
     QDBusConnection::sessionBus().registerService("dde.dock.entry.Applet" + id);
     qDebug() << "Register:" << QDBusConnection::sessionBus().registerObject("/dde/dock/entry/v1/Applet" + id, parent);
 
-    setData("xid", id);
+    setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(id));
     qDebug() << "CreateProxyer for:" <<  xid;
 }
+
