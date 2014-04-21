@@ -10,53 +10,64 @@ DockQuickWindow::DockQuickWindow(QQuickWindow *parent):
     sformat.setAlphaBufferSize(8);
     this->setFormat(sformat);
     this->setClearBeforeRendering(true);
-
-    this->applet = new DockApplet(this, winId());
 }
 
 DockQuickWindow::~DockQuickWindow()
 {
-    delete this->applet;
+}
+void DockQuickWindow::destroyed(QObject *)
+{
+    qDebug() << "HEHEH Destroy" << winId();
 }
 
-void DockQuickWindow::setMenu(const QString& m)
+void DockApplet::setMenu(const QString& m)
 {
     m_menu = m;
     Q_EMIT menuChanged(m);
-    applet->setData("menu", m);
+    m_dbus_proxyer->setData("menu", m);
 }
-void DockQuickWindow::setIcon(const QString& v)
+void DockApplet::setIcon(const QString& v)
 {
     m_icon = v;
     Q_EMIT iconChanged(v);
-    applet->setData("icon", v);
+    m_dbus_proxyer->setData("icon", v);
 }
-void DockQuickWindow::setTitle(const QString& v)
+void DockApplet::setTitle(const QString& v)
 {
-    QQuickWindow::setTitle(v);
     m_title= v;
     Q_EMIT titleChanged(v);
-    applet->setData("title", v);
+    m_dbus_proxyer->setData("title", v);
 }
-void DockQuickWindow::setStatus(const qint32 v)
+void DockApplet::setStatus(const qint32 v)
 {
     m_status = v;
     Q_EMIT statusChanged(v);
-    applet->setData("status", QString::number(v));
+    m_dbus_proxyer->setData("status", QString::number(v));
+}
+void DockApplet::setWindow(DockQuickWindow* w) 
+{
+    m_dbus_proxyer->setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(w->winId()));
+    w->show();
+}
+
+DockApplet::DockApplet(QQuickItem *parent)
+    :QQuickItem(parent)
+{
+    this->m_dbus_proxyer= new DockAppletDBus(this);
+}
+
+DockApplet::~DockApplet()
+{
+    delete this->m_dbus_proxyer;
 }
 
 
-
-DockApplet::DockApplet(DockQuickWindow* parent, int xid) :
+DockAppletDBus::DockAppletDBus(DockApplet* parent) :
     QDBusAbstractAdaptor(parent),
     m_parent(parent)
 {
     qDBusRegisterMetaType<StringMap>();
-    QString id  = QString::number(xid);
+    QString id  = "xx" + parent->id();
     QDBusConnection::sessionBus().registerService("dde.dock.entry.Applet" + id);
     qDebug() << "Register:" << QDBusConnection::sessionBus().registerObject("/dde/dock/entry/v1/Applet" + id, parent);
-
-    setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(id));
-    qDebug() << "CreateProxyer for:" <<  xid;
 }
-

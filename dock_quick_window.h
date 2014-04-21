@@ -6,21 +6,37 @@
 #include <QDBusAbstractAdaptor>
 #include <QRect>
 
+class DockAppletDBus;
 class DockApplet;
 class DockQuickWindow: public QQuickWindow
 {
     Q_OBJECT
     Q_DISABLE_COPY(DockQuickWindow)
 
+public:
+    DockQuickWindow(QQuickWindow *parent = 0);
+    ~DockQuickWindow();
+
+    bool firstShow;
+    void destroyed(QObject *);
+};
+
+class DockApplet : public QQuickItem {
+    Q_OBJECT
+    Q_DISABLE_COPY(DockApplet)
+
     Q_PROPERTY(QString menu READ menu WRITE setMenu NOTIFY menuChanged)
     Q_PROPERTY(QString appid READ id WRITE setId NOTIFY idChanged)
     Q_PROPERTY(QString icon READ icon WRITE setIcon NOTIFY iconChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(qint32 status READ status WRITE setStatus NOTIFY statusChanged)
-
 public:
-    DockQuickWindow(QQuickWindow *parent = 0);
-    ~DockQuickWindow();
+    DockApplet(QQuickItem *parent = 0);
+    ~DockApplet();
+    Q_PROPERTY(DockQuickWindow* window READ window WRITE setWindow)
+
+    void setWindow(DockQuickWindow*);
+    DockQuickWindow* window();
 
     const QString& id() { return m_id; }
     void setId(const QString& v) { m_id = v; Q_EMIT idChanged(v);}
@@ -49,14 +65,13 @@ private:
     QString m_icon;
     QString m_title;
     qint32 m_status;
-    bool firstShow;
-    DockApplet* applet;
+    DockAppletDBus* m_dbus_proxyer;
 };
 
 typedef QMap<QString,QString> StringMap;
 Q_DECLARE_METATYPE(StringMap)
 
-class DockApplet : public QDBusAbstractAdaptor {
+class DockAppletDBus : public QDBusAbstractAdaptor {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "dde.dock.Entry")
 
@@ -65,7 +80,7 @@ class DockApplet : public QDBusAbstractAdaptor {
     Q_PROPERTY(StringMap Data READ data)
 
 public:
-    DockApplet(DockQuickWindow* parent, int xid);
+    DockAppletDBus(DockApplet* parent);
 
     const QMap<QString,QString>& data() {
 	return m_data;
@@ -82,7 +97,7 @@ public:
     Q_SIGNAL void DataChanged(QString,QString);
 private:
     StringMap  m_data;
-    DockQuickWindow* m_parent;
+    DockApplet* m_parent;
 };
 
 #endif // MYITEM_H
