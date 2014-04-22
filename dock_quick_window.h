@@ -81,6 +81,8 @@ public:
     void setStatus(const qint32 v);
     Q_SIGNAL void statusChanged(qint32);
 
+    Q_SIGNAL void activate(qint32 arg0, qint32 arg1);
+
 private:
     QString m_id;
     QString m_icon;
@@ -117,6 +119,7 @@ public:
     }
 
     Q_SLOT void HandleMenuItem(qint32 id);
+    Q_SLOT void Activate(qint32 arg0, qint32 arg1);
 
     Q_SIGNAL void DataChanged(QString,QString);
 private:

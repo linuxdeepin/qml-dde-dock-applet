@@ -93,6 +93,10 @@ void DockAppletDBus::HandleMenuItem(qint32 id)
     m_parent->handleMenuItem(id);
 }
 
+void DockAppletDBus::Activate(qint32 arg0, qint32 arg1)
+{
+    Q_EMIT m_parent->activate(arg0, arg1);
+}
 
 DockMenu::DockMenu(QQuickItem *parent)
     :QQuickItem(parent)
