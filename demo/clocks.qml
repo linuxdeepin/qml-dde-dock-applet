@@ -8,10 +8,16 @@ DockApplet {
     title: "he"
     appid: "Applet100663307"
     id: root
+    menu : DockMenu {
+	content: "{}"
+	onActivate: {
+	    console.log("hehe", id)
+	}
+    }
 
     window : DockQuickWindow {
 	width: 640; height: 320
-	//color: Qt.rgba(0,0.8,0,0.8)
+	color: Qt.rgba(0,0,0,0)
 
 	ListView {
 	    id: clockview

@@ -5,9 +5,31 @@
 #include <QQuickWindow>
 #include <QDBusAbstractAdaptor>
 #include <QRect>
+#include <QPointer>
 
 class DockAppletDBus;
 class DockApplet;
+class DockMenu;
+
+class DockMenu: public QQuickItem
+{
+    Q_OBJECT
+    Q_DISABLE_COPY(DockMenu)
+
+    Q_PROPERTY(QString content READ content WRITE setContent NOTIFY contentChanged)
+public:
+    DockMenu(QQuickItem* parent = 0);
+    ~DockMenu();
+
+    const QString& content() { return m_content; }
+    void setContent(const QString& m) { m_content = m; Q_EMIT contentChanged(m_content); }
+    Q_SIGNAL void contentChanged(QString);
+
+    Q_SIGNAL void activate(qint32 id);
+private:
+    QString m_content;
+};
+
 class DockQuickWindow: public QQuickWindow
 {
     Q_OBJECT
@@ -25,7 +47,7 @@ class DockApplet : public QQuickItem {
     Q_OBJECT
     Q_DISABLE_COPY(DockApplet)
 
-    Q_PROPERTY(QString menu READ menu WRITE setMenu NOTIFY menuChanged)
+    Q_PROPERTY(DockMenu* menu READ menu WRITE setMenu)
     Q_PROPERTY(QString appid READ id WRITE setId NOTIFY idChanged)
     Q_PROPERTY(QString icon READ icon WRITE setIcon NOTIFY iconChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
@@ -42,10 +64,10 @@ public:
     void setId(const QString& v) { m_id = v; Q_EMIT idChanged(v);}
     Q_SIGNAL void idChanged(QString);
 
-
-    const QString& menu() { return m_menu; }
-    void setMenu(const QString& m);
-    Q_SIGNAL void menuChanged(QString);
+    DockMenu* menu() {return m_menu; }
+    void setMenu(DockMenu* v);
+    Q_SLOT void setMenuContent(const QString& c);
+    void handleMenuItem(qint32 id);
 
     const QString& icon() {return m_icon; }
     void setIcon(const QString& v);
@@ -60,12 +82,12 @@ public:
     Q_SIGNAL void statusChanged(qint32);
 
 private:
-    QString m_menu;
     QString m_id;
     QString m_icon;
     QString m_title;
     qint32 m_status;
     DockAppletDBus* m_dbus_proxyer;
+    QPointer<DockMenu> m_menu;
 };
 
 typedef QMap<QString,QString> StringMap;
@@ -93,6 +115,8 @@ public:
 	Q_EMIT DataChanged(k,v);
 	qDebug() << "SetData" <<  k <<  m_data[k];
     }
+
+    Q_SLOT void HandleMenuItem(qint32 id);
 
     Q_SIGNAL void DataChanged(QString,QString);
 private:
