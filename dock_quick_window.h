@@ -58,7 +58,7 @@ public:
     Q_PROPERTY(DockQuickWindow* window READ window WRITE setWindow)
 
     void setWindow(DockQuickWindow*);
-    DockQuickWindow* window();
+    DockQuickWindow* window() { return m_window; }
 
     const QString& id() { return m_id; }
     void setId(const QString& v) { m_id = v; Q_EMIT idChanged(v);}
@@ -95,6 +95,7 @@ private:
     qint32 m_status;
     DockAppletDBus* m_dbus_proxyer;
     QPointer<DockMenu> m_menu;
+    QPointer<DockQuickWindow> m_window;
 };
 
 typedef QMap<QString,QString> StringMap;
@@ -124,6 +125,8 @@ public:
     //qDebug() << "SetData" <<  k <<  m_data[k];
     }
 
+    Q_SLOT void ShowQuickWindow() { if (m_parent->window()) m_parent->window()->show(); }
+
     Q_SLOT void Activate(qint32 x, qint32 y);
     Q_SLOT void SecondaryActivate(qint32 x, qint32 y);
     Q_SLOT void ContextMenu(qint32 x, qint32 y);
@@ -132,6 +135,7 @@ public:
     Q_SLOT void OnDragEnter(qint32 x, qint32 y, const QString& data);
     Q_SLOT void OnDragLeave(qint32 x, qint32 y, const QString& data);
     Q_SLOT void OnDragOver(qint32 x, qint32 y, const QString& data);
+
 
     Q_SIGNAL void DataChanged(QString,QString);
 private:

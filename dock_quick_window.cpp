@@ -16,10 +16,6 @@ DockQuickWindow::DockQuickWindow(QQuickWindow *parent):
 DockQuickWindow::~DockQuickWindow()
 {
 }
-void DockQuickWindow::destroyed(QObject *)
-{
-    qDebug() << "HEHEH Destroy" << winId();
-}
 
 void DockApplet::setMenu(DockMenu* m)
 {
@@ -62,8 +58,8 @@ void DockApplet::setStatus(const qint32 v)
 }
 void DockApplet::setWindow(DockQuickWindow* w) 
 {
+    m_window = w;
     m_dbus_proxyer->setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(w->winId()));
-    w->show();
 }
 
 DockApplet::DockApplet(QQuickItem *parent)
