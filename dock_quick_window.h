@@ -81,7 +81,12 @@ public:
     void setStatus(const qint32 v);
     Q_SIGNAL void statusChanged(qint32);
 
-    Q_SIGNAL void activate(qint32 arg0, qint32 arg1);
+    Q_SIGNAL void activate(qint32 x, qint32 y);
+    Q_SIGNAL void secondaryActivate(qint32 x, qint32 y);
+    Q_SIGNAL void dragdrop(qint32 x, qint32 y, const QString&);
+    Q_SIGNAL void dragenter(qint32 x, qint32 y, const QString&);
+    Q_SIGNAL void dragleave(qint32 x, qint32 y, const QString&);
+    Q_SIGNAL void dragover(qint32 x, qint32 y, const QString&);
 
 private:
     QString m_id;
@@ -105,6 +110,7 @@ class DockAppletDBus : public QDBusAbstractAdaptor {
 
 public:
     DockAppletDBus(DockApplet* parent);
+    ~DockAppletDBus();
 
     const QMap<QString,QString>& data() {
 	return m_data;
@@ -115,14 +121,21 @@ public:
     void setData(const QString& k, const QString& v) {
 	m_data[k] = v;
 	Q_EMIT DataChanged(k,v);
-	qDebug() << "SetData" <<  k <<  m_data[k];
+    //qDebug() << "SetData" <<  k <<  m_data[k];
     }
 
+    Q_SLOT void Activate(qint32 x, qint32 y);
+    Q_SLOT void SecondaryActivate(qint32 x, qint32 y);
+    Q_SLOT void ContextMenu(qint32 x, qint32 y);
     Q_SLOT void HandleMenuItem(qint32 id);
-    Q_SLOT void Activate(qint32 arg0, qint32 arg1);
+    Q_SLOT void OnDragDrop(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void OnDragEnter(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void OnDragLeave(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void OnDragOver(qint32 x, qint32 y, const QString& data);
 
     Q_SIGNAL void DataChanged(QString,QString);
 private:
+    QString m_id;
     StringMap  m_data;
     DockApplet* m_parent;
 };

@@ -83,9 +83,14 @@ DockAppletDBus::DockAppletDBus(DockApplet* parent) :
     m_parent(parent)
 {
     qDBusRegisterMetaType<StringMap>();
-    QString id = QUuid::createUuid().toString().replace("{", "").replace("}", "").replace("-", "");
-    QDBusConnection::sessionBus().registerService("dde.dock.entry.Applet" + id);
-    qDebug() << "Register:" << QDBusConnection::sessionBus().registerObject("/dde/dock/entry/v1/Applet" + id, parent);
+    m_id = QUuid::createUuid().toString().replace("{", "").replace("}", "").replace("-", "");
+    QDBusConnection::sessionBus().registerService("dde.dock.entry.Applet" + m_id);
+    qDebug() << "Register:" << QDBusConnection::sessionBus().registerObject("/dde/dock/entry/v1/Applet" + m_id, parent);
+}
+DockAppletDBus::~DockAppletDBus()
+{
+    QDBusConnection::sessionBus().unregisterService("dde.dock.entry.Applet" + m_id);
+    qDebug() <<" Unregister:" << "dde.dock.entry.Applet" + m_id;
 }
 
 void DockAppletDBus::HandleMenuItem(qint32 id)
@@ -93,9 +98,39 @@ void DockAppletDBus::HandleMenuItem(qint32 id)
     m_parent->handleMenuItem(id);
 }
 
-void DockAppletDBus::Activate(qint32 arg0, qint32 arg1)
+void DockAppletDBus::OnDragDrop(qint32 x, qint32 y, const QString &data)
 {
-    Q_EMIT m_parent->activate(arg0, arg1);
+    Q_EMIT m_parent->dragdrop(x, y, data);
+}
+
+void DockAppletDBus::OnDragEnter(qint32 x, qint32 y, const QString &data)
+{
+    Q_EMIT m_parent->dragenter(x, y, data);
+}
+
+void DockAppletDBus::OnDragLeave(qint32 x, qint32 y, const QString &data)
+{
+    Q_EMIT m_parent->dragleave(x, y, data);
+}
+
+void DockAppletDBus::OnDragOver(qint32 x, qint32 y, const QString &data)
+{
+    Q_EMIT m_parent->dragover(x, y, data);
+}
+
+void DockAppletDBus::Activate(qint32 x, qint32 y)
+{
+    Q_EMIT m_parent->activate(x, y);
+}
+
+void DockAppletDBus::SecondaryActivate(qint32 x, qint32 y)
+{
+    Q_EMIT m_parent->secondaryActivate(x, y);
+}
+
+void DockAppletDBus::ContextMenu(qint32 x, qint32 y)
+{
+    qDebug() << "Hasn't support" << x << y;
 }
 
 DockMenu::DockMenu(QQuickItem *parent)
