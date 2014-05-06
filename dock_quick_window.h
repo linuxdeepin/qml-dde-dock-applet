@@ -87,6 +87,7 @@ public:
     Q_SIGNAL void dragenter(qint32 x, qint32 y, const QString&);
     Q_SIGNAL void dragleave(qint32 x, qint32 y, const QString&);
     Q_SIGNAL void dragover(qint32 x, qint32 y, const QString&);
+    Q_SIGNAL void mousewheel(qint32 x, qint32 y, qint32 angleDelta);
 
 private:
     QString m_id;
@@ -135,7 +136,7 @@ public:
     Q_SLOT void OnDragEnter(qint32 x, qint32 y, const QString& data);
     Q_SLOT void OnDragLeave(qint32 x, qint32 y, const QString& data);
     Q_SLOT void OnDragOver(qint32 x, qint32 y, const QString& data);
-
+    Q_SLOT void OnMouseWheel(qint32 x, qint32 y, qint32 angleDelta);
 
     Q_SIGNAL void DataChanged(QString,QString);
 private:

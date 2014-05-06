@@ -1,0 +1,11 @@
+*.pyc
+nohup.out
+.#*
+*~
+build
+dist
+dtk.egg-info
+*.po~
+*.swp
+*.user
+*.old

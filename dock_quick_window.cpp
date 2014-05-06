@@ -86,7 +86,7 @@ DockAppletDBus::DockAppletDBus(DockApplet* parent) :
 DockAppletDBus::~DockAppletDBus()
 {
     QDBusConnection::sessionBus().unregisterService("dde.dock.entry.Applet" + m_id);
-    qDebug() <<" Unregister:" << "dde.dock.entry.Applet" + m_id;
+    qDebug() << "Unregister:" << "dde.dock.entry.Applet" + m_id;
 }
 
 void DockAppletDBus::HandleMenuItem(qint32 id)
@@ -112,6 +112,11 @@ void DockAppletDBus::OnDragLeave(qint32 x, qint32 y, const QString &data)
 void DockAppletDBus::OnDragOver(qint32 x, qint32 y, const QString &data)
 {
     Q_EMIT m_parent->dragover(x, y, data);
+}
+
+void DockAppletDBus::OnMouseWheel(qint32 x, qint32 y, qint32 angleDelta)
+{
+    Q_EMIT m_parent->mousewheel(x, y, angleDelta);
 }
 
 void DockAppletDBus::Activate(qint32 x, qint32 y)
