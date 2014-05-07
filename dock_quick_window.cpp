@@ -94,27 +94,27 @@ void DockAppletDBus::HandleMenuItem(qint32 id)
     m_parent->handleMenuItem(id);
 }
 
-void DockAppletDBus::OnDragDrop(qint32 x, qint32 y, const QString &data)
+void DockAppletDBus::HandleDragDrop(qint32 x, qint32 y, const QString &data)
 {
     Q_EMIT m_parent->dragdrop(x, y, data);
 }
 
-void DockAppletDBus::OnDragEnter(qint32 x, qint32 y, const QString &data)
+void DockAppletDBus::HandleDragEnter(qint32 x, qint32 y, const QString &data)
 {
     Q_EMIT m_parent->dragenter(x, y, data);
 }
 
-void DockAppletDBus::OnDragLeave(qint32 x, qint32 y, const QString &data)
+void DockAppletDBus::HandleDragLeave(qint32 x, qint32 y, const QString &data)
 {
     Q_EMIT m_parent->dragleave(x, y, data);
 }
 
-void DockAppletDBus::OnDragOver(qint32 x, qint32 y, const QString &data)
+void DockAppletDBus::HandleDragOver(qint32 x, qint32 y, const QString &data)
 {
     Q_EMIT m_parent->dragover(x, y, data);
 }
 
-void DockAppletDBus::OnMouseWheel(qint32 x, qint32 y, qint32 angleDelta)
+void DockAppletDBus::HandleMouseWheel(qint32 x, qint32 y, qint32 angleDelta)
 {
     Q_EMIT m_parent->mousewheel(x, y, angleDelta);
 }

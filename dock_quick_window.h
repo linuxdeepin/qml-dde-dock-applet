@@ -52,10 +52,10 @@ class DockApplet : public QQuickItem {
     Q_PROPERTY(QString icon READ icon WRITE setIcon NOTIFY iconChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(qint32 status READ status WRITE setStatus NOTIFY statusChanged)
+    Q_PROPERTY(DockQuickWindow* window READ window WRITE setWindow)
 public:
     DockApplet(QQuickItem *parent = 0);
     ~DockApplet();
-    Q_PROPERTY(DockQuickWindow* window READ window WRITE setWindow)
 
     void setWindow(DockQuickWindow*);
     DockQuickWindow* window() { return m_window; }
@@ -132,11 +132,11 @@ public:
     Q_SLOT void SecondaryActivate(qint32 x, qint32 y);
     Q_SLOT void ContextMenu(qint32 x, qint32 y);
     Q_SLOT void HandleMenuItem(qint32 id);
-    Q_SLOT void OnDragDrop(qint32 x, qint32 y, const QString& data);
-    Q_SLOT void OnDragEnter(qint32 x, qint32 y, const QString& data);
-    Q_SLOT void OnDragLeave(qint32 x, qint32 y, const QString& data);
-    Q_SLOT void OnDragOver(qint32 x, qint32 y, const QString& data);
-    Q_SLOT void OnMouseWheel(qint32 x, qint32 y, qint32 angleDelta);
+    Q_SLOT void HandleDragDrop(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void HandleDragEnter(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void HandleDragLeave(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void HandleDragOver(qint32 x, qint32 y, const QString& data);
+    Q_SLOT void HandleMouseWheel(qint32 x, qint32 y, qint32 angleDelta);
 
     Q_SIGNAL void DataChanged(QString,QString);
 private:
