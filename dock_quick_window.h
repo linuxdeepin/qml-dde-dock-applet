@@ -89,6 +89,8 @@ public:
     Q_SIGNAL void dragover(qint32 x, qint32 y, const QString&);
     Q_SIGNAL void mousewheel(qint32 x, qint32 y, qint32 angleDelta);
 
+    Q_INVOKABLE void setData(QString key, QString value);
+
 private:
     QString m_id;
     QString m_icon;
@@ -115,15 +117,15 @@ public:
     ~DockAppletDBus();
 
     const QMap<QString,QString>& data() {
-	return m_data;
+        return m_data;
     }
     const QString type() { return "Applet"; }
     const QString id() {return m_parent->id(); }
 
     void setData(const QString& k, const QString& v) {
-	m_data[k] = v;
-	Q_EMIT DataChanged(k,v);
-    //qDebug() << "SetData" <<  k <<  m_data[k];
+        m_data[k] = v;
+        Q_EMIT DataChanged(k,v);
+        //qDebug() << "SetData" <<  k <<  m_data[k];
     }
 
     Q_SLOT void ShowQuickWindow() { if (m_parent->window()) m_parent->window()->show(); }

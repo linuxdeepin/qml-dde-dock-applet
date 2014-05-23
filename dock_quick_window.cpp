@@ -42,6 +42,7 @@ void DockApplet::setIcon(const QString& v)
 {
     m_icon = v;
     Q_EMIT iconChanged(v);
+    qDebug() << "icon Changed:" << v;
     m_dbus_proxyer->setData("icon", v);
 }
 void DockApplet::setTitle(const QString& v)
@@ -55,6 +56,11 @@ void DockApplet::setStatus(const qint32 v)
     m_status = v;
     Q_EMIT statusChanged(v);
     m_dbus_proxyer->setData("status", QString::number(v));
+}
+
+void DockApplet::setData(QString key, QString value)
+{
+    m_dbus_proxyer->setData(key, value);
 }
 void DockApplet::setWindow(DockQuickWindow* w) 
 {
