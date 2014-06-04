@@ -15,6 +15,7 @@ DockQuickWindow::DockQuickWindow(QQuickWindow *parent):
 
 DockQuickWindow::~DockQuickWindow()
 {
+    qDebug() << "Window is destroy...";
 }
 
 void DockApplet::setMenu(DockMenu* m)
@@ -26,7 +27,7 @@ void DockApplet::setMenu(DockMenu* m)
     connect(m_menu, SIGNAL(contentChanged(QString)), this, SLOT(setMenuContent(QString)));
     setMenuContent(m_menu->content());
 }
-void DockApplet::handleMenuItem(qint32 id)
+void DockApplet::handleMenuItem(QString id)
 {
     if (m_menu) {
         Q_EMIT m_menu->activate(id);
@@ -42,7 +43,7 @@ void DockApplet::setIcon(const QString& v)
 {
     m_icon = v;
     Q_EMIT iconChanged(v);
-    qDebug() << "icon Changed:" << v;
+    //qDebug() << "icon Changed:" << v;
     m_dbus_proxyer->setData("icon", v);
 }
 void DockApplet::setTitle(const QString& v)
@@ -66,6 +67,7 @@ void DockApplet::setWindow(DockQuickWindow* w)
 {
     m_window = w;
     m_dbus_proxyer->setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(w->winId()));
+    Q_EMIT windowChanged(w);
 }
 
 DockApplet::DockApplet(QQuickItem *parent)
@@ -95,7 +97,7 @@ DockAppletDBus::~DockAppletDBus()
     qDebug() << "Unregister:" << "dde.dock.entry.Applet" + m_id;
 }
 
-void DockAppletDBus::HandleMenuItem(qint32 id)
+void DockAppletDBus::HandleMenuItem(QString id)
 {
     m_parent->handleMenuItem(id);
 }

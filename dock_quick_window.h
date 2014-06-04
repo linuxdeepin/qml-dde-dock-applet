@@ -22,10 +22,13 @@ public:
     ~DockMenu();
 
     const QString& content() { return m_content; }
-    void setContent(const QString& m) { m_content = m; Q_EMIT contentChanged(m_content); }
+    void setContent(const QString& m) {
+        m_content = m;
+        Q_EMIT contentChanged(m_content);
+    }
     Q_SIGNAL void contentChanged(QString);
 
-    Q_SIGNAL void activate(qint32 id);
+    Q_SIGNAL void activate(QString id);
 private:
     QString m_content;
 };
@@ -35,12 +38,19 @@ class DockQuickWindow: public QQuickWindow
     Q_OBJECT
     Q_DISABLE_COPY(DockQuickWindow)
 
+    //Q_PROPERTY(QString winId READ winId WRITE setWindId)
+
 public:
     DockQuickWindow(QQuickWindow *parent = 0);
     ~DockQuickWindow();
 
+    //void setWinId();
+    //const QString& winId() { return this->winId(); }
+
     bool firstShow;
     void destroyed(QObject *);
+
+    //Q_INVOKABLE QString getWindowId(){ return QString(this->winId()); }
 };
 
 class DockApplet : public QQuickItem {
@@ -67,7 +77,7 @@ public:
     DockMenu* menu() {return m_menu; }
     void setMenu(DockMenu* v);
     Q_SLOT void setMenuContent(const QString& c);
-    void handleMenuItem(qint32 id);
+    void handleMenuItem(QString id);
 
     const QString& icon() {return m_icon; }
     void setIcon(const QString& v);
@@ -133,7 +143,7 @@ public:
     Q_SLOT void Activate(qint32 x, qint32 y);
     Q_SLOT void SecondaryActivate(qint32 x, qint32 y);
     Q_SLOT void ContextMenu(qint32 x, qint32 y);
-    Q_SLOT void HandleMenuItem(qint32 id);
+    Q_SLOT void HandleMenuItem(QString id);
     Q_SLOT void HandleDragDrop(qint32 x, qint32 y, const QString& data);
     Q_SLOT void HandleDragEnter(qint32 x, qint32 y, const QString& data);
     Q_SLOT void HandleDragLeave(qint32 x, qint32 y, const QString& data);
@@ -141,6 +151,7 @@ public:
     Q_SLOT void HandleMouseWheel(qint32 x, qint32 y, qint32 angleDelta);
 
     Q_SIGNAL void DataChanged(QString,QString);
+
 private:
     QString m_id;
     StringMap  m_data;
