@@ -1,6 +1,7 @@
 #ifndef MYITEM_H
 #define MYITEM_H
 
+#include <QGuiApplication>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QDBusAbstractAdaptor>
@@ -51,6 +52,7 @@ public:
     void destroyed(QObject *);
 
     //Q_INVOKABLE QString getWindowId(){ return QString(this->winId()); }
+
 };
 
 class DockApplet : public QQuickItem {
@@ -62,13 +64,14 @@ class DockApplet : public QQuickItem {
     Q_PROPERTY(QString icon READ icon WRITE setIcon NOTIFY iconChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(qint32 status READ status WRITE setStatus NOTIFY statusChanged)
-    Q_PROPERTY(DockQuickWindow* window READ window WRITE setWindow)
+    Q_PROPERTY(DockQuickWindow* window READ window WRITE setWindow NOTIFY windowChanged)
 public:
     DockApplet(QQuickItem *parent = 0);
     ~DockApplet();
 
     void setWindow(DockQuickWindow*);
     DockQuickWindow* window() { return m_window; }
+    Q_SIGNAL void windowChanged(DockQuickWindow*);
 
     const QString& id() { return m_id; }
     void setId(const QString& v) { m_id = v; Q_EMIT idChanged(v);}
@@ -98,6 +101,20 @@ public:
     Q_SIGNAL void dragleave(qint32 x, qint32 y, const QString&);
     Q_SIGNAL void dragover(qint32 x, qint32 y, const QString&);
     Q_SIGNAL void mousewheel(qint32 x, qint32 y, qint32 angleDelta);
+
+    // when x window destroy. emit this
+    Q_SIGNAL void nativeWindowDestroyed();
+
+    //This signal just for Qt5 double screen switch bug
+    //When screen switch,
+    Q_SIGNAL void qt5ScreenDestroyed();
+
+    Q_SLOT void notifyQt5ScreenDestroyed(QScreen* s) {
+        if (NULL == s) {
+            qDebug()<<"Scren is "<<s<<", Send qt5ScreenDestroyed signal";
+            this->qt5ScreenDestroyed();
+        }
+    }
 
     Q_INVOKABLE void setData(QString key, QString value);
 
@@ -138,8 +155,7 @@ public:
         //qDebug() << "SetData" <<  k <<  m_data[k];
     }
 
-    Q_SLOT void ShowQuickWindow() { if (m_parent->window()) m_parent->window()->show(); }
-
+    Q_SLOT void ShowQuickWindow();
     Q_SLOT void Activate(qint32 x, qint32 y);
     Q_SLOT void SecondaryActivate(qint32 x, qint32 y);
     Q_SLOT void ContextMenu(qint32 x, qint32 y);
@@ -157,5 +173,24 @@ private:
     StringMap  m_data;
     DockApplet* m_parent;
 };
+
+#include <QAbstractNativeEventFilter>
+
+class Monitor : public QObject, public QAbstractNativeEventFilter {
+    Q_OBJECT
+public:
+    static Monitor& instance();
+    void add(WId wid, DockApplet* w);
+    void remove(WId wid, DockApplet* w);
+    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result);
+private:
+    QMap<WId, DockApplet*> m_dockApplets;
+
+private:
+    Monitor();
+    Monitor(const Monitor&);
+    Monitor& operator=(const Monitor&);
+};
+
 
 #endif // MYITEM_H

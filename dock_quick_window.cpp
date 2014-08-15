@@ -63,10 +63,20 @@ void DockApplet::setData(QString key, QString value)
 {
     m_dbus_proxyer->setData(key, value);
 }
-void DockApplet::setWindow(DockQuickWindow* w) 
+void DockApplet::setWindow(DockQuickWindow* w)
 {
+    if (m_window){
+        Monitor::instance().remove(m_window->winId(), this);
+        disconnect(m_window, SIGNAL(screenDestroyed));
+    }
+
     m_window = w;
     m_dbus_proxyer->setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(w->winId()));
+
+    if (m_window) {
+        Monitor::instance().add(w->winId(), this);
+        connect(m_window, SIGNAL(screenChanged(QScreen *)), this, SLOT(notifyQt5ScreenDestroyed(QScreen*)));
+    }
     Q_EMIT windowChanged(w);
 }
 
@@ -78,6 +88,7 @@ DockApplet::DockApplet(QQuickItem *parent)
 
 DockApplet::~DockApplet()
 {
+    Monitor::instance().remove(m_window->winId(), this);
     delete this->m_dbus_proxyer;
 }
 
@@ -127,6 +138,19 @@ void DockAppletDBus::HandleMouseWheel(qint32 x, qint32 y, qint32 angleDelta)
     Q_EMIT m_parent->mousewheel(x, y, angleDelta);
 }
 
+void DockAppletDBus::ShowQuickWindow()
+{
+    DockQuickWindow * window = m_parent->window();
+    if (window) {
+        QScreen * pScreen = window->screen();
+        // TODO: Bugfix, remove when qt fix this bug
+        if (NULL == pScreen) {
+            return;
+        }
+        window->show();
+    }
+}
+
 void DockAppletDBus::Activate(qint32 x, qint32 y)
 {
     Q_EMIT m_parent->activate(x, y);
@@ -150,4 +174,50 @@ DockMenu::DockMenu(QQuickItem *parent)
 
 DockMenu::~DockMenu()
 {
+}
+
+#include <X11/extensions/Xcomposite.h>
+#include <xcb/xcb.h>
+#include <xcb/xproto.h>
+#include <QMap>
+#include <QProcess>
+
+
+Monitor& Monitor::instance() {
+    static Monitor s_monitor;
+    return s_monitor;
+}
+
+Monitor::Monitor()
+    : QAbstractNativeEventFilter()
+{
+    if (QGuiApplication *gui = dynamic_cast<QGuiApplication*>(QCoreApplication::instance())) {
+        gui->installNativeEventFilter(this);
+        qDebug()<<"Monitor Instance OK";
+    }
+}
+
+void Monitor::add(WId wid, DockApplet* dockApplet){
+    m_dockApplets[wid] = dockApplet;
+}
+
+void Monitor::remove(WId wid, DockApplet* dockApplet){
+    Q_UNUSED(dockApplet);
+    m_dockApplets.remove(wid);
+}
+
+bool Monitor::nativeEventFilter(const QByteArray &eventType, void *message, long *result){
+    Q_UNUSED(result);
+    if (eventType=="xcb_generic_event_t") {
+        xcb_generic_event_t *event = static_cast<xcb_generic_event_t*>(message);
+        const uint8_t responseType = event->response_type & ~0x80;
+        if (responseType == XCB_DESTROY_NOTIFY) {
+            xcb_destroy_notify_event_t *ev = reinterpret_cast<xcb_destroy_notify_event_t*>(event);
+            DockApplet * dockApplet = m_dockApplets[ev->window];
+            if (dockApplet) {
+                dockApplet->nativeWindowDestroyed();
+            }
+        }
+    }
+    return false;
 }
