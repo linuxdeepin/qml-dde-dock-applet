@@ -176,7 +176,6 @@ DockMenu::~DockMenu()
 {
 }
 
-#include <X11/extensions/Xcomposite.h>
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 #include <QMap>
