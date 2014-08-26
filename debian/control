@@ -1,0 +1,13 @@
+Source: qml-dde-dock-applet
+Section: devel
+Priority: extra
+Maintainer: Deepin Packages Builder <packages@linuxdeepin.com>
+Build-Depends: debhelper (>= 8.0.0), qt5-qmake, qt5-default, qtdeclarative5-dev
+Standards-Version: 3.9.4
+Homepage: http://www.linuxdeepin.com
+
+Package: qml-dde-dock-applet
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, qt5-extra
+Description: Deepin QML widgets
+ Deepin QML widgets

@@ -88,7 +88,12 @@ DockApplet::DockApplet(QQuickItem *parent)
 
 DockApplet::~DockApplet()
 {
-    Monitor::instance().remove(m_window->winId(), this);
+    if (m_window) {
+        Monitor::instance().remove(m_window->winId(), this);
+        m_window->setParent(NULL);
+        m_window->deleteLater();
+        m_window = NULL;
+    }
     delete this->m_dbus_proxyer;
 }
 
