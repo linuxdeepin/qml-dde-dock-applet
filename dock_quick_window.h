@@ -1,11 +1,9 @@
 #ifndef MYITEM_H
 #define MYITEM_H
 
-#include <QGuiApplication>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QDBusAbstractAdaptor>
-#include <QRect>
 #include <QPointer>
 
 class DockAppletDBus;
@@ -39,20 +37,20 @@ class DockQuickWindow: public QQuickWindow
     Q_OBJECT
     Q_DISABLE_COPY(DockQuickWindow)
 
-    //Q_PROPERTY(QString winId READ winId WRITE setWindId)
-
 public:
     DockQuickWindow(QQuickWindow *parent = 0);
     ~DockQuickWindow();
 
-    //void setWinId();
-    //const QString& winId() { return this->winId(); }
+    // when x window destroy. emit this
+    Q_SIGNAL void nativeWindowDestroyed();
+    //This signal just for Qt5 double screen switch bug
+    //When screen switch,
+    Q_SIGNAL void qt5ScreenDestroyed();
 
-    bool firstShow;
-    void destroyed(QObject *);
 
-    //Q_INVOKABLE QString getWindowId(){ return QString(this->winId()); }
-
+private:
+    Q_SLOT void handleScreenChanged(QScreen* s);
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 };
 
 class DockApplet : public QQuickItem {
@@ -102,19 +100,6 @@ public:
     Q_SIGNAL void dragover(qint32 x, qint32 y, const QString&);
     Q_SIGNAL void mousewheel(qint32 x, qint32 y, qint32 angleDelta);
 
-    // when x window destroy. emit this
-    Q_SIGNAL void nativeWindowDestroyed();
-
-    //This signal just for Qt5 double screen switch bug
-    //When screen switch,
-    Q_SIGNAL void qt5ScreenDestroyed();
-
-    Q_SLOT void notifyQt5ScreenDestroyed(QScreen* s) {
-        if (NULL == s) {
-            qDebug()<<"Scren is "<<s<<", Send qt5ScreenDestroyed signal";
-            this->qt5ScreenDestroyed();
-        }
-    }
 
     Q_INVOKABLE void setData(QString key, QString value);
 
@@ -143,16 +128,19 @@ public:
     DockAppletDBus(DockApplet* parent);
     ~DockAppletDBus();
 
-    const QMap<QString,QString>& data() {
+    const StringMap& data() {
         return m_data;
     }
     const QString type() { return "Applet"; }
-    const QString id() {return m_parent->id(); }
+    const QString id() { return m_parent->id(); }
 
     void setData(const QString& k, const QString& v) {
         m_data[k] = v;
         Q_EMIT DataChanged(k,v);
-        //qDebug() << "SetData" <<  k <<  m_data[k];
+    }
+    void clearData(const QString& k) {
+        m_data.remove(k);
+        Q_EMIT DataChanged(k, "");
     }
 
     Q_SLOT void ShowQuickWindow();
@@ -166,31 +154,12 @@ public:
     Q_SLOT void HandleDragOver(qint32 x, qint32 y, const QString& data);
     Q_SLOT void HandleMouseWheel(qint32 x, qint32 y, qint32 angleDelta);
 
-    Q_SIGNAL void DataChanged(QString,QString);
+    Q_SIGNAL void DataChanged(QString, QString);
 
 private:
     QString m_id;
     StringMap  m_data;
     DockApplet* m_parent;
 };
-
-#include <QAbstractNativeEventFilter>
-
-class Monitor : public QObject, public QAbstractNativeEventFilter {
-    Q_OBJECT
-public:
-    static Monitor& instance();
-    void add(WId wid, DockApplet* w);
-    void remove(WId wid, DockApplet* w);
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result);
-private:
-    QMap<WId, DockApplet*> m_dockApplets;
-
-private:
-    Monitor();
-    Monitor(const Monitor&);
-    Monitor& operator=(const Monitor&);
-};
-
 
 #endif // MYITEM_H

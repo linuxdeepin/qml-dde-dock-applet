@@ -2,21 +2,45 @@
 #include <QDBusConnection>
 #include <QDBusMetaType>
 #include <QUuid>
+#include <xcb/xcb.h>
 
 DockQuickWindow::DockQuickWindow(QQuickWindow *parent):
-    QQuickWindow(parent),
-    firstShow(true)
+    QQuickWindow(parent)
 {
     QSurfaceFormat sformat;
     sformat.setAlphaBufferSize(8);
     this->setFormat(sformat);
     this->setClearBeforeRendering(true);
+
+    connect(this, SIGNAL(screenChanged(QScreen*)), this, SLOT(handleScreenChanged(QScreen*)));
 }
 
 DockQuickWindow::~DockQuickWindow()
 {
-    qDebug() << "Window is destroy...";
 }
+
+void DockQuickWindow::handleScreenChanged(QScreen* s)
+{
+    if (s == 0) {
+        Q_EMIT qt5ScreenDestroyed();
+    }
+}
+
+bool DockQuickWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
+{
+    Q_UNUSED(result);
+    if (eventType != "xcb_generic_event_t") {
+        return false;
+    }
+
+    xcb_generic_event_t *event = static_cast<xcb_generic_event_t*>(message);
+    const uint8_t responseType = event->response_type & ~0x80;
+    if (responseType == XCB_DESTROY_NOTIFY) {
+        Q_EMIT nativeWindowDestroyed();
+    }
+    return false;
+}
+
 
 void DockApplet::setMenu(DockMenu* m)
 {
@@ -24,9 +48,20 @@ void DockApplet::setMenu(DockMenu* m)
         disconnect(m_menu, SIGNAL(contentChanged(QString)), this, SLOT(setMenuContent(QString)));
     }
     m_menu = m;
-    connect(m_menu, SIGNAL(contentChanged(QString)), this, SLOT(setMenuContent(QString)));
-    setMenuContent(m_menu->content());
+
+    if (m_menu) {
+        connect(m_menu, SIGNAL(contentChanged(QString)), this, SLOT(setMenuContent(QString)));
+        setMenuContent(m_menu->content());
+    } else {
+        setMenuContent("");
+    }
 }
+
+void DockApplet::setMenuContent(const QString &c)
+{
+    setData("menu", c);
+}
+
 void DockApplet::handleMenuItem(QString id)
 {
     if (m_menu) {
@@ -34,67 +69,57 @@ void DockApplet::handleMenuItem(QString id)
     }
 }
 
-void DockApplet::setMenuContent(const QString &c)
-{
-    m_dbus_proxyer->setData("menu", c);
-}
 
 void DockApplet::setIcon(const QString& v)
 {
     m_icon = v;
+    setData("icon", v);
     Q_EMIT iconChanged(v);
-    //qDebug() << "icon Changed:" << v;
-    m_dbus_proxyer->setData("icon", v);
 }
+
 void DockApplet::setTitle(const QString& v)
 {
     m_title= v;
+    setData("title", v);
     Q_EMIT titleChanged(v);
-    m_dbus_proxyer->setData("title", v);
 }
+
 void DockApplet::setStatus(const qint32 v)
 {
     m_status = v;
+    setData("status", QString::number(v));
     Q_EMIT statusChanged(v);
-    m_dbus_proxyer->setData("status", QString::number(v));
 }
 
 void DockApplet::setData(QString key, QString value)
 {
-    m_dbus_proxyer->setData(key, value);
+    if (value == "") {
+        m_dbus_proxyer->clearData(key);
+    } else {
+        m_dbus_proxyer->setData(key, value);
+    }
 }
+
 void DockApplet::setWindow(DockQuickWindow* w)
 {
-    if (m_window){
-        Monitor::instance().remove(m_window->winId(), this);
-        disconnect(m_window, SIGNAL(screenDestroyed));
-    }
-
     m_window = w;
-    m_dbus_proxyer->setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(w->winId()));
 
     if (m_window) {
-        Monitor::instance().add(w->winId(), this);
-        connect(m_window, SIGNAL(screenChanged(QScreen *)), this, SLOT(notifyQt5ScreenDestroyed(QScreen*)));
+        setData("app-xids", QString("[{\"Xid\":%1,\"Title\":\"\"}]").arg(w->winId()));
+    } else {
+        setData("app-xids", "");
     }
     Q_EMIT windowChanged(w);
 }
 
 DockApplet::DockApplet(QQuickItem *parent)
-    :QQuickItem(parent)
+    :QQuickItem(parent),
+    m_dbus_proxyer(new DockAppletDBus(this))
 {
-    this->m_dbus_proxyer= new DockAppletDBus(this);
 }
 
 DockApplet::~DockApplet()
 {
-    if (m_window) {
-        Monitor::instance().remove(m_window->winId(), this);
-        m_window->setParent(NULL);
-        m_window->deleteLater();
-        m_window = NULL;
-    }
-    delete this->m_dbus_proxyer;
 }
 
 
@@ -179,49 +204,4 @@ DockMenu::DockMenu(QQuickItem *parent)
 
 DockMenu::~DockMenu()
 {
-}
-
-#include <xcb/xcb.h>
-#include <xcb/xproto.h>
-#include <QMap>
-#include <QProcess>
-
-
-Monitor& Monitor::instance() {
-    static Monitor s_monitor;
-    return s_monitor;
-}
-
-Monitor::Monitor()
-    : QAbstractNativeEventFilter()
-{
-    if (QGuiApplication *gui = dynamic_cast<QGuiApplication*>(QCoreApplication::instance())) {
-        gui->installNativeEventFilter(this);
-        qDebug()<<"Monitor Instance OK";
-    }
-}
-
-void Monitor::add(WId wid, DockApplet* dockApplet){
-    m_dockApplets[wid] = dockApplet;
-}
-
-void Monitor::remove(WId wid, DockApplet* dockApplet){
-    Q_UNUSED(dockApplet);
-    m_dockApplets.remove(wid);
-}
-
-bool Monitor::nativeEventFilter(const QByteArray &eventType, void *message, long *result){
-    Q_UNUSED(result);
-    if (eventType=="xcb_generic_event_t") {
-        xcb_generic_event_t *event = static_cast<xcb_generic_event_t*>(message);
-        const uint8_t responseType = event->response_type & ~0x80;
-        if (responseType == XCB_DESTROY_NOTIFY) {
-            xcb_destroy_notify_event_t *ev = reinterpret_cast<xcb_destroy_notify_event_t*>(event);
-            DockApplet * dockApplet = m_dockApplets[ev->window];
-            if (dockApplet) {
-                dockApplet->nativeWindowDestroyed();
-            }
-        }
-    }
-    return false;
 }
